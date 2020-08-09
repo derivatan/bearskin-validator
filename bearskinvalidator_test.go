@@ -1,7 +1,7 @@
 package bearskin_test
 
 import (
-	"bearskin-validator"
+	"github.com/derivatan/bearskin-validator"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
