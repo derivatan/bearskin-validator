@@ -5,11 +5,30 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-type Claims struct {
-	jwt.StandardClaims
-	UserId string `json:"user-id"`
+/*
+UnauthorizedError is used when the token is invalid, or there was some other error while parsing the claim.
+*/
+type UnauthorizedError struct {
+	Message string
 }
 
+func (ue UnauthorizedError) Error() string {
+	return ue.Message
+}
+
+/*
+Claims are the information that is stored inside a token.
+If the token was verified correctly, these claims represent the truth.
+*/
+type Claims struct {
+	jwt.StandardClaims
+	UserID string `json:"user-id"`
+}
+
+/*
+GetClaimsFromVerifiedJwt will return the claims if the token is valid.
+If the token is invalid, nil is returned along with an error.
+*/
 func GetClaimsFromVerifiedJwt(publicKey, tokenString string) (*Claims, error) {
 	verifyKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKey))
 	if err != nil {
@@ -23,7 +42,7 @@ func GetClaimsFromVerifiedJwt(publicKey, tokenString string) (*Claims, error) {
 		return verifyKey, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("invalid token: %v", err)
+		return nil, UnauthorizedError{Message: err.Error()}
 	}
 
 	return token.Claims.(*Claims), nil

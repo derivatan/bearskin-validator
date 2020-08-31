@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// Note: these tests will stop working in 2030-07-10, because of the expiration time.
+// Note: these tests will stop working in 2030-07-10, because of the expiration time that is set on the tokens.
 
 func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 	exp := int64(1909872000)
@@ -16,7 +16,7 @@ func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, exp, claims.ExpiresAt)
-	assert.Equal(t, userId, claims.UserId)
+	assert.Equal(t, userId, claims.UserID)
 }
 
 func TestGetClaimsFromVerifiedJwtWithInvalidPublicKey(t *testing.T) {
@@ -32,7 +32,7 @@ func TestGetClaimsFromVerifiedJwtWithInvalidToken(t *testing.T) {
 
 	assert.Nil(t, claims)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "invalid token")
+	assert.IsType(t, bearskin.UnauthorizedError{}, err)
 }
 
 func TestGetClaimsFromVerifiedJwtWithExpiredToken(t *testing.T) {
@@ -40,7 +40,7 @@ func TestGetClaimsFromVerifiedJwtWithExpiredToken(t *testing.T) {
 
 	assert.Nil(t, claims)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "invalid token")
+	assert.IsType(t, bearskin.UnauthorizedError{}, err)
 }
 
 func TestGetClaimsFromVerifiedJwtWithWrongMethod(t *testing.T) {
@@ -49,19 +49,21 @@ func TestGetClaimsFromVerifiedJwtWithWrongMethod(t *testing.T) {
 	assert.Nil(t, claims)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "unexpected signing method")
-	assert.Contains(t, err.Error(), "invalid token")
+	assert.IsType(t, bearskin.UnauthorizedError{}, err)
 }
 
 func getPublicKey() string {
 	return "-----BEGIN PUBLIC KEY-----\n" +
-	"MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt\n" +
-	"73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J+xNrU1IK2x5qajtzdmmd/Jw1kjx\n" +
-	"T/I0sNu9sMctFMeX970LSMHks5GAr+kiioPUOLt0aMag4sCsfni5VFGH9mvdxe5U\n" +
-	"EaEqjirH6BNikIHRAgMBAAE=\n" +
-	"-----END PUBLIC KEY-----\n"
+		"MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt\n" +
+		"73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J+xNrU1IK2x5qajtzdmmd/Jw1kjx\n" +
+		"T/I0sNu9sMctFMeX970LSMHks5GAr+kiioPUOLt0aMag4sCsfni5VFGH9mvdxe5U\n" +
+		"EaEqjirH6BNikIHRAgMBAAE=\n" +
+		"-----END PUBLIC KEY-----\n"
 }
 
 /*
+Keys that was used to generate tokens:
+
 -----BEGIN PUBLIC KEY-----
 MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt
 73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J+xNrU1IK2x5qajtzdmmd/Jw1kjx
