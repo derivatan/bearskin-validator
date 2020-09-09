@@ -11,12 +11,22 @@ import (
 func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 	exp := int64(1909872000)
 	userId := "e6186040-6375-42e7-bee0-df9c0b9332c1"
+	permissions := []string{
+		"user.create",
+		"user.read",
+		"user.update",
+		"user.delete",
+	}
 
-	claims, err := bearskin.GetClaimsFromVerifiedJwt(getPublicKey(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIwMDAsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEifQ.QubK1QqqVZiZZIyzZgcopubSclAnDflJJfqkL6RRV-1E3hWZ7d6Gj3m8mx7eA1dOA2uMXFj4BG7e0V4VgsRZIIkf6pOqJiXrSVIQzMCBFTTxOjd6VZLV0_LAzmHiDmpTfaSQyNVf-P768O3Z0phZOnh9ykeBfMljZ4P-L1C21Is")
+	claims, err := bearskin.GetClaimsFromVerifiedJwt(getPublicKey(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIwMDAsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEiLCJwZXJtaXNzaW9ucyI6WyJ1c2VyLmNyZWF0ZSIsInVzZXIucmVhZCIsInVzZXIudXBkYXRlIiwidXNlci5kZWxldGUiXX0.GDRkjoHXg2Y2wbBfgxgLB1Ae3RfoN5SKGaea221bVzNWCSojtZm2-WHEdTjuArnmwI2fp0NydkQ7NzFTfYC6FQP5Zxvcy3Ndd2hBH6PqmRbRY8vYT9Vq8N5p0ad_C0CFrw0kRi7iA6HJVffG_9pt_YrGoFXtTR5_g4FP_S5LI3w")
 
 	assert.Nil(t, err)
 	assert.Equal(t, exp, claims.ExpiresAt)
 	assert.Equal(t, userId, claims.UserID)
+	assert.Len(t, claims.Permissions, len(permissions))
+	for p := 0; p < len(permissions); p++ {
+		assert.Equal(t, permissions[p], claims.Permissions[p])
+	}
 }
 
 func TestGetClaimsFromVerifiedJwtWithInvalidPublicKey(t *testing.T) {
@@ -62,6 +72,8 @@ func getPublicKey() string {
 }
 
 /*
+https://jwt.io/#debugger-io?token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIwMDAsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEiLCJwZXJtaXNzaW9ucyI6WyJ1c2VyLmNyZWF0ZSIsInVzZXIucmVhZCIsInVzZXIudXBkYXRlIiwidXNlci5kZWxldGUiXX0.GDRkjoHXg2Y2wbBfgxgLB1Ae3RfoN5SKGaea221bVzNWCSojtZm2-WHEdTjuArnmwI2fp0NydkQ7NzFTfYC6FQP5Zxvcy3Ndd2hBH6PqmRbRY8vYT9Vq8N5p0ad_C0CFrw0kRi7iA6HJVffG_9pt_YrGoFXtTR5_g4FP_S5LI3w&publicKey=-----BEGIN%20PUBLIC%20KEY-----%0AMIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt%0A73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J%2BxNrU1IK2x5qajtzdmmd%2FJw1kjx%0AT%2FI0sNu9sMctFMeX970LSMHks5GAr%2BkiioPUOLt0aMag4sCsfni5VFGH9mvdxe5U%0AEaEqjirH6BNikIHRAgMBAAE%3D%0A-----END%20PUBLIC%20KEY-----
+
 Keys that was used to generate tokens:
 
 -----BEGIN PUBLIC KEY-----

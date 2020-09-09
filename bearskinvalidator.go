@@ -23,6 +23,7 @@ If the token was verified correctly, these claims represent the truth.
 type Claims struct {
 	jwt.StandardClaims
 	UserID string `json:"user-id"`
+	Permissions []string `json:"permissions"`
 }
 
 /*
