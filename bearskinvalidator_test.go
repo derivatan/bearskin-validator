@@ -8,6 +8,14 @@ import (
 
 // Note: these tests will stop working in 2030-07-10, because of the expiration time that is set on the tokens.
 
+func TestUnauthorizedError(t *testing.T) {
+	message := "you have no power here!"
+
+	err := bearskin.UnauthorizedError{Message: message}
+
+	assert.Equal(t, message, err.Error())
+
+}
 func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 	exp := int64(1909872000)
 	userId := "e6186040-6375-42e7-bee0-df9c0b9332c1"
