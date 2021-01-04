@@ -37,7 +37,7 @@ The Permit property should only considered if the map is nil.
 */
 type Permissions struct {
 	Next   map[string]Permissions `json:"n,omitempty"`
-	Permit bool `json:"p,omitempty"`
+	Permit *bool                  `json:"p,omitempty"`
 }
 
 /*
@@ -71,6 +71,8 @@ func CheckClaimForPermission(claims *Claims, permission string) bool {
 }
 
 func MonkeyFunctionOnlyForTestingPurposes() bool {
+	t := true
+	f := false
 	// how to handle for example different customers... parametric data??????
 
 	// bearskin.users.*
@@ -78,13 +80,13 @@ func MonkeyFunctionOnlyForTestingPurposes() bool {
 	permissions := Permissions{Next: map[string]Permissions{
 		"bearskin": {Next: map[string]Permissions{
 			"users": {Next: map[string]Permissions{
-				"*": {Permit: true},
-				"delete": {Permit: false},
+				"*":      {Permit: &t},
+				"delete": {Permit: &f},
 			}},
 			"permissions": {},
-			"tokens": {},
+			"tokens":      {},
 		}},
-		"Other": {},
+		"Other":      {},
 		"more other": {},
 	}}
 	permission := "bearskin.users.delete"
@@ -94,7 +96,7 @@ func MonkeyFunctionOnlyForTestingPurposes() bool {
 
 /*
 TODO: fil in this.
- */
+*/
 func checkClaimForPermissionRecursive(permissions Permissions, permission string) bool {
 	var foundStarPermit bool
 	permissionParts := strings.SplitN(permission, ".", 2)
@@ -116,7 +118,7 @@ func checkClaimForPermissionRecursive(permissions Permissions, permission string
 
 /*
 CheckPermission will checks a token if it contains a given permission.
- */
+*/
 func CheckPermission(publicKey, tokenString, permission string) bool {
 	claims, err := GetClaimsFromVerifiedJwt(publicKey, tokenString)
 	if err != nil {
