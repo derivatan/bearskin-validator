@@ -21,14 +21,14 @@ func (ue UnauthorizedError) Error() string {
 Claims are the information that is stored inside a token.
 If the token was verified correctly, these claims represent the truth.
 
-Permissions is a nested map, with arbitrary depths, with strings for keys and a bool as ending value.
+Permissions is a nested map, with arbitrary depths, with strings for keys and a bool as value.
 This could be explained by the Backus–Naur form: `Permissions = map[string]Permissions | bool`
 The ending bool represent weather you
 */
 type Claims struct {
 	jwt.StandardClaims
-	UserID      string      `json:"user-id"`
-	Permissions Permissions `json:"permissions"`
+	UserID      string       `json:"user-id"`
+	Permissions *Permissions `json:"permissions"`
 }
 
 /*
@@ -36,8 +36,8 @@ Permissions should contain either a Permit or the Next permissions.
 The Permit property should only considered if the map is nil.
 */
 type Permissions struct {
-	Next   map[string]Permissions `json:"n,omitempty"`
-	Permit *bool                  `json:"p,omitempty"`
+	Next   map[string]*Permissions `json:"n,omitempty"`
+	Permit bool                    `json:"p,omitempty"`
 }
 
 /*
@@ -71,17 +71,15 @@ func CheckClaimForPermission(claims *Claims, permission string) bool {
 }
 
 func MonkeyFunctionOnlyForTestingPurposes() bool {
-	t := true
-	f := false
 	// how to handle for example different customers... parametric data??????
 
 	// bearskin.users.*
 	// -bearskin.users.delete
-	permissions := Permissions{Next: map[string]Permissions{
-		"bearskin": {Next: map[string]Permissions{
-			"users": {Next: map[string]Permissions{
-				"*":      {Permit: &t},
-				"delete": {Permit: &f},
+	permissions := &Permissions{Next: map[string]*Permissions{
+		"bearskin": {Next: map[string]*Permissions{
+			"users": {Next: map[string]*Permissions{
+				"*":      {Permit: true},
+				"delete": {Permit: false},
 			}},
 			"permissions": {},
 			"tokens":      {},
@@ -97,7 +95,7 @@ func MonkeyFunctionOnlyForTestingPurposes() bool {
 /*
 TODO: fil in this.
 */
-func checkClaimForPermissionRecursive(permissions Permissions, permission string) bool {
+func checkClaimForPermissionRecursive(permissions *Permissions, permission string) bool {
 	var foundStarPermit bool
 	permissionParts := strings.SplitN(permission, ".", 2)
 	if len(permissionParts) > 0 {
