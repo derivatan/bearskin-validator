@@ -1,4 +1,4 @@
-module github.com/derivatan/bearskin-validator
+module github.com/derivatan/bearskin-verifier
 
 go 1.14
 

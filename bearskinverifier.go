@@ -70,31 +70,9 @@ func CheckClaimForPermission(claims *Claims, permission string) bool {
 	return checkClaimForPermissionRecursive(claims.Permissions, permission)
 }
 
-func MonkeyFunctionOnlyForTestingPurposes() bool {
-	// how to handle for example different customers... parametric data??????
-
-	// bearskin.users.*
-	// -bearskin.users.delete
-	permissions := &Permissions{Next: map[string]*Permissions{
-		"bearskin": {Next: map[string]*Permissions{
-			"users": {Next: map[string]*Permissions{
-				"*":      {Permit: true},
-				"delete": {Permit: false},
-			}},
-			"permissions": {},
-			"tokens":      {},
-		}},
-		"Other":      {},
-		"more other": {},
-	}}
-	permission := "bearskin.users.delete"
-
-	return checkClaimForPermissionRecursive(permissions, permission)
-}
-
 /*
-TODO: fil in this.
-*/
+checkClaimForPermissionRecursive does stuff.
+ */
 func checkClaimForPermissionRecursive(permissions *Permissions, permission string) bool {
 	var foundStarPermit bool
 	permissionParts := strings.SplitN(permission, ".", 2)
@@ -109,7 +87,7 @@ func checkClaimForPermissionRecursive(permissions *Permissions, permission strin
 		if len(permissionParts) > 1 {
 			return checkClaimForPermissionRecursive(val, permissionParts[1])
 		}
-		return false
+		return val.Permit
 	}
 	return false
 }
