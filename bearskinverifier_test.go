@@ -84,12 +84,13 @@ func TestCheckClaimForPermissionRecursive(t *testing.T) {
 				}},
 			}},
 			NestedTests: map[string]bool{
-				"users.create": true,
-				"users.delete": false,
-				"users.read": false,
 				"other.create": false,
 				"users": false,
+				"users.create": true,
 				"users.create.1": false,
+				"users.create.true": false,
+				"users.delete": false,
+				"users.read": false,
 			},
 		},
 		{
@@ -102,7 +103,10 @@ func TestCheckClaimForPermissionRecursive(t *testing.T) {
 			}},
 			NestedTests: map[string]bool{
 				"users.*": true,
+				"users.create": true,
+				"users.create.123.apa": true,
 				"users.delete": false,
+				"users.delete.apa": false,
 			},
 		},
 	}
