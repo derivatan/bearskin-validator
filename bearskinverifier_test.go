@@ -76,7 +76,7 @@ func TestCheckClaimForPermissionRecursive(t *testing.T) {
 
 	tests := []test{
 		{
-			Name: "All user, except delete",
+			Name: "create users, dont delete",
 			Permission: &Permissions{Next: map[string]*Permissions{
 				"users": {Next: map[string]*Permissions{
 					"create": {Permit: true},
@@ -86,7 +86,23 @@ func TestCheckClaimForPermissionRecursive(t *testing.T) {
 			NestedTests: map[string]bool{
 				"users.create": true,
 				"users.delete": false,
+				"users.read": false,
 				"other.create": false,
+				"users": false,
+				"users.create.1": false,
+			},
+		},
+		{
+			Name: "All user, except delete",
+			Permission: &Permissions{Next: map[string]*Permissions{
+				"users": {Next: map[string]*Permissions{
+					"*": {Permit: true},
+					"delete": {Permit: false},
+				}},
+			}},
+			NestedTests: map[string]bool{
+				"users.*": true,
+				"users.delete": false,
 			},
 		},
 	}
