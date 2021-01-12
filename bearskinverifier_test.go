@@ -1,6 +1,7 @@
 package bearskin
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -11,7 +12,7 @@ func TestUnauthorizedError(t *testing.T) {
 
 	assert.Equal(t, message, err.Error())
 }
-
+/*
 func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 	exp := int64(1909872000)
 	userId := "e6186040-6375-42e7-bee0-df9c0b9332c1"
@@ -64,19 +65,21 @@ func TestGetClaimsFromVerifiedJwtWithWrongMethod(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "unexpected signing method")
 	assert.IsType(t, UnauthorizedError{}, err)
-}
+}*/
 
 func TestCheckClaimForPermissionRecursive(t *testing.T) {
 	type test struct {
-		Permission *Permissions
+		Name        string
+		Permission  *Permissions
 		NestedTests map[string]bool
 	}
 
 	tests := []test{
 		{
+			Name: "All user, except delete",
 			Permission: &Permissions{Next: map[string]*Permissions{
 				"users": {Next: map[string]*Permissions{
-					"*": {Permit: true},
+					"create": {Permit: true},
 					"delete": {Permit: false},
 				}},
 			}},
@@ -92,7 +95,7 @@ func TestCheckClaimForPermissionRecursive(t *testing.T) {
 		for permission, expected := range test.NestedTests {
 			result := checkClaimForPermissionRecursive(test.Permission, permission)
 
-			assert.Equal(t, expected, result)
+			assert.Equal(t, expected, result, fmt.Sprintf("%s: %s", test.Name, permission))
 		}
 	}
 }

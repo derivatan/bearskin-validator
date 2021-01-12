@@ -74,21 +74,24 @@ func CheckClaimForPermission(claims *Claims, permission string) bool {
 checkClaimForPermissionRecursive does stuff.
  */
 func checkClaimForPermissionRecursive(permissions *Permissions, permission string) bool {
-	var foundStarPermit bool
-	permissionParts := strings.SplitN(permission, ".", 2)
-	if len(permissionParts) > 0 {
-		if permissionParts[0] == "*" {
-			foundStarPermit = true
-		}
-		val, ok := permissions.Next[permissionParts[0]]
-		if !ok {
-			return foundStarPermit
-		}
-		if len(permissionParts) > 1 {
-			return checkClaimForPermissionRecursive(val, permissionParts[1])
-		}
-		return val.Permit
+	if permissions == nil {
+		fmt.Println("permissions is nil. return false")
+		return false
 	}
+	if permissions.Next == nil {
+		fmt.Println("next is nil, return permit")
+		return permissions.Permit
+	}
+	parts := strings.SplitN(permission, ".", 2)
+	if len(parts) > 0 {
+		val, ok := permissions.Next[parts[0]]
+		if ok && len(parts) > 1 {
+			fmt.Println("recursive call")
+			return checkClaimForPermissionRecursive(val, parts[1])
+		}
+	}
+	fmt.Println("end of func return false.")
+	// TODO: Check star!
 	return false
 }
 
