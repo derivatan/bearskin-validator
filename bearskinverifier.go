@@ -91,7 +91,7 @@ func checkClaimForPermissionRecursive(permissions *Permissions, permission strin
 		}
 		if ok {
 			return checkClaimForPermissionRecursive(val, rest)
-		} else {
+		} else if parts[0] != "" {
 			return star
 		}
 	}
