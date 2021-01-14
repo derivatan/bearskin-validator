@@ -6,36 +6,39 @@ import (
 	"testing"
 )
 
+// Note: some of these test will fail after 2029-12-31: 23:59:59 (1893455999), because of the expiredate on the token
+
 func TestUnauthorizedError(t *testing.T) {
 	message := "you have no power here!"
 	err := UnauthorizedError{Message: message}
 
 	assert.Equal(t, message, err.Error())
 }
-/*
-func TestGetClaimsFromVerifiedJwt(t *testing.T) {
-	exp := int64(1909872000)
-	userId := "e6186040-6375-42e7-bee0-df9c0b9332c1"
-	permissions := []string{
-		"user.create",
-		"user.read",
-		"user.update",
-		"user.delete",
-	}
 
-	claims, err := GetClaimsFromVerifiedJwt(getPublicKey(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIwMDAsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEiLCJwZXJtaXNzaW9ucyI6WyJ1c2VyLmNyZWF0ZSIsInVzZXIucmVhZCIsInVzZXIudXBkYXRlIiwidXNlci5kZWxldGUiXX0.GDRkjoHXg2Y2wbBfgxgLB1Ae3RfoN5SKGaea221bVzNWCSojtZm2-WHEdTjuArnmwI2fp0NydkQ7NzFTfYC6FQP5Zxvcy3Ndd2hBH6PqmRbRY8vYT9Vq8N5p0ad_C0CFrw0kRi7iA6HJVffG_9pt_YrGoFXtTR5_g4FP_S5LI3w")
+func TestGetClaimsFromVerifiedJwt(t *testing.T) {
+	exp := int64(1893455999)
+	userId := "73b461c4-dbe3-4430-b8fb-a7611394c9e1"
+	token := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4OTM0NTU5OTksInVzZXItaWQiOiI3M2I0NjFjNC1kYmUzLTQ0MzAtYjhmYi1hNzYxMTM5NGM5ZTEiLCJwZXJtaXNzaW9ucyI6eyJuIjp7InVzZXJzIjp7Im4iOnsiKiI6eyJwIjp0cnVlfSwiZGVsZXRlIjp7fX19fX19.Uqz2x8guhGj3bzCKFlIasAQntIRFUyAbrREnrtWy-1Tu3kcxvNfA4Gx722Ke-w2sg45udZvlCt8NGDxAXhbt0pYGCLmPfP97woRfns4mlQjdOMS53AWihXHVzwPJDLc3Eh1uxRSBL-J9ffdkkHZx-k7F6ju0LQGSnT-6T7GMYTk"
+	permissions := &Permissions{Next: map[string]*Permissions{
+		"users": {Next: map[string]*Permissions{
+			"*": {Permit: true},
+			"delete": {Permit: false},
+		}},
+	}}
+
+	claims, err := GetClaimsFromVerifiedJwt(getPublicKey(), token)
 
 	assert.Nil(t, err)
 	assert.Equal(t, exp, claims.ExpiresAt)
 	assert.Equal(t, userId, claims.UserID)
-	assert.Len(t, claims.Permissions, len(permissions))
-	for p := 0; p < len(permissions); p++ {
-		//assert.Equal(t, permissions[p], claims.Permissions[p])
-	}
+	assert.Len(t, claims.Permissions.Next, len(permissions.Next))
+	assert.Equal(t, claims.Permissions.Next["users"].Next["*"], permissions.Next["users"].Next["*"])
+	assert.Equal(t, claims.Permissions.Next["users"].Next["delete"], permissions.Next["users"].Next["delete"])
 }
 
 func TestGetClaimsFromVerifiedJwtWithInvalidPublicKey(t *testing.T) {
-	claims, err := GetClaimsFromVerifiedJwt("", "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1ODIyMzAwMjAsInVzZXItaWQiOiJkYzdjMTJhNi01Nzk1LTQ1OGItYmIxZS0yYThjNjgwYTFkOWUifQ.AsPpFZriWS_7yyWHBy8fXGUPc4V3JUSDMMrRCkFHWLBIj-Lrn8sIoIlkjgQhpycoJmEUpC5scROGyjnDbtjTjJZSaPR4iasUH8XnJZiA2u8YwStMc0ppuyYmZ4d5Z_wqkgx0_dhM4GerKShU6wbTPE-nRUT8Mivi1uHwHtSvweE")
+	token := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1ODIyMzAwMjAsInVzZXItaWQiOiJkYzdjMTJhNi01Nzk1LTQ1OGItYmIxZS0yYThjNjgwYTFkOWUifQ.AsPpFZriWS_7yyWHBy8fXGUPc4V3JUSDMMrRCkFHWLBIj-Lrn8sIoIlkjgQhpycoJmEUpC5scROGyjnDbtjTjJZSaPR4iasUH8XnJZiA2u8YwStMc0ppuyYmZ4d5Z_wqkgx0_dhM4GerKShU6wbTPE-nRUT8Mivi1uHwHtSvweE"
+	claims, err := GetClaimsFromVerifiedJwt("", token)
 
 	assert.Nil(t, claims)
 	assert.NotNil(t, err)
@@ -51,21 +54,22 @@ func TestGetClaimsFromVerifiedJwtWithInvalidToken(t *testing.T) {
 }
 
 func TestGetClaimsFromVerifiedJwtWithExpiredToken(t *testing.T) {
-	claims, err := GetClaimsFromVerifiedJwt(getPublicKey(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEifQ.DtwCv5sUUbBXmEFOnbfE61vpYYM8dqOAQfHgiPPlLH0bAmd8QGbZ0p6qviyanLWAPPxoUpdCv96Onrw0Usl5ZQKwbgP7E2RCXAzQdZkidEctJk_lGN6StLVFsDyZCEoeS6gKWv1xYapapOVDcHjE4MW0J3lEt6Ntvc9UHn2tW8k")
+	token := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MTA2NTk3MzIsInVzZXItaWQiOiI3M2I0NjFjNC1kYmUzLTQ0MzAtYjhmYi1hNzYxMTM5NGM5ZTEiLCJwZXJtaXNzaW9ucyI6eyJuIjp7InVzZXJzIjp7Im4iOnsiKiI6eyJwIjp0cnVlfSwiZGVsZXRlIjp7fX19fX19.DTv4IH-ZlpgjZ0DRJcmUc4MkjCPOlcu53FHtpq7T10XICY4bo27RKINrMZqzDZd1ENTlGS_HZOpPPVh92UBcMq4T6TfTCpecK47SsXjBgMws9pLiGX84sWtUpgsdqxS7QrQ6fIoVicvlrRftxWLLRf0fC3SrVWy_4yNCPdqs6t4"
+	claims, err := GetClaimsFromVerifiedJwt(getPublicKey(), token)
 
 	assert.Nil(t, claims)
 	assert.NotNil(t, err)
 	assert.IsType(t, UnauthorizedError{}, err)
 }
-
 func TestGetClaimsFromVerifiedJwtWithWrongMethod(t *testing.T) {
-	claims, err := GetClaimsFromVerifiedJwt(getPublicKey(), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIwMDAsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEifQ.cui0YFf_RUuMnkU7QZOa8Ym_knh_50O9tvZr6s8yYLA")
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4OTM0NTU5OTksInVzZXItaWQiOiI3M2I0NjFjNC1kYmUzLTQ0MzAtYjhmYi1hNzYxMTM5NGM5ZTEiLCJwZXJtaXNzaW9ucyI6eyJuIjp7InVzZXJzIjp7Im4iOnsiKiI6eyJwIjp0cnVlfSwiZGVsZXRlIjp7fX19fX19.m0-vicb6JYYn_PK7Rire9ryjZt5AYoydbwDX8gtK2uE"
+	claims, err := GetClaimsFromVerifiedJwt(getPublicKey(), token)
 
 	assert.Nil(t, claims)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "unexpected signing method")
 	assert.IsType(t, UnauthorizedError{}, err)
-}*/
+}
 
 func TestCheckClaimForPermissionRecursive(t *testing.T) {
 	type test struct {
@@ -140,38 +144,9 @@ func TestCheckClaimForPermissionRecursive(t *testing.T) {
 
 func getPublicKey() string {
 	return "-----BEGIN PUBLIC KEY-----\n" +
-		"MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt\n" +
-		"73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J+xNrU1IK2x5qajtzdmmd/Jw1kjx\n" +
-		"T/I0sNu9sMctFMeX970LSMHks5GAr+kiioPUOLt0aMag4sCsfni5VFGH9mvdxe5U\n" +
-		"EaEqjirH6BNikIHRAgMBAAE=\n" +
+		"MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgGrOE4UxkwIRkIDkAfwTKqJMHh6d\n" +
+		"spQO9vK9n2dk54/q7i+hwFfBah34rwYb/DJ7Gf8nscR/ay6bLCo88r9QogpP0YB4\n" +
+		"wDKijRSgtoUWdKyuePX2oBihfIZfrdJgpTNn5NWocKY854bBOKGReLUbMaYJWCjg\n" +
+		"qOXXSIVwsam3ysrnAgMBAAE=\n" +
 		"-----END PUBLIC KEY-----\n"
 }
-
-/*
-https://jwt.io/#debugger-io?token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE5MDk4NzIwMDAsInVzZXItaWQiOiJlNjE4NjA0MC02Mzc1LTQyZTctYmVlMC1kZjljMGI5MzMyYzEiLCJwZXJtaXNzaW9ucyI6WyJ1c2VyLmNyZWF0ZSIsInVzZXIucmVhZCIsInVzZXIudXBkYXRlIiwidXNlci5kZWxldGUiXX0.GDRkjoHXg2Y2wbBfgxgLB1Ae3RfoN5SKGaea221bVzNWCSojtZm2-WHEdTjuArnmwI2fp0NydkQ7NzFTfYC6FQP5Zxvcy3Ndd2hBH6PqmRbRY8vYT9Vq8N5p0ad_C0CFrw0kRi7iA6HJVffG_9pt_YrGoFXtTR5_g4FP_S5LI3w&publicKey=-----BEGIN%20PUBLIC%20KEY-----%0AMIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt%0A73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J%2BxNrU1IK2x5qajtzdmmd%2FJw1kjx%0AT%2FI0sNu9sMctFMeX970LSMHks5GAr%2BkiioPUOLt0aMag4sCsfni5VFGH9mvdxe5U%0AEaEqjirH6BNikIHRAgMBAAE%3D%0A-----END%20PUBLIC%20KEY-----
-
-Keys that was used to generate tokens:
-
------BEGIN PUBLIC KEY-----
-MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt
-73JoUZxKH5EPCkktdkh7bMBfgEr0fCy8ZRn5J+xNrU1IK2x5qajtzdmmd/Jw1kjx
-T/I0sNu9sMctFMeX970LSMHks5GAr+kiioPUOLt0aMag4sCsfni5VFGH9mvdxe5U
-EaEqjirH6BNikIHRAgMBAAE=
------END PUBLIC KEY-----
-
------BEGIN RSA PRIVATE KEY-----
-MIICWwIBAAKBgFLwYNEcOHhq4vhbbXT0BU6Z4KYt73JoUZxKH5EPCkktdkh7bMBf
-gEr0fCy8ZRn5J+xNrU1IK2x5qajtzdmmd/Jw1kjxT/I0sNu9sMctFMeX970LSMHk
-s5GAr+kiioPUOLt0aMag4sCsfni5VFGH9mvdxe5UEaEqjirH6BNikIHRAgMBAAEC
-gYA0Dw22M7B+ZRjyKvEZZ9Gs9Ik9xbd2aGRRZXVK59Xc+Nw1wsMQPOGaKruGmPoc
-w3d7q4YL7DDVdcg4cIu1AfhnTMIDUZWHnB+m0V7eG4FH9DvOGmdhvHQCZyFpU15L
-zNh1XVdiuhDRwSLv9xGTH6Rv7gKPfDyrmvs5nMl3XIrgAQJBAKK37jRALvlBtrkF
-dYeFJfQAk1/YccsLDLwUlMdQ6+ANeZjeWrg2NzcjLMm5nepamUncx57L5qLGn0BC
-MvuhA2ECQQCCfEAhYA9lApe4EBbVqIC/Uw2muYW+6YveLE3BPS7vdmukTGM8sNg1
-M/Vx70ZHIgxp+bId2NjzrFVQEUoCwIRxAkBYZZmXcyLRsFxmqUuPAst6gfGOCRTQ
-nEEf0AJ/QTvS7R8Y5/raxkE6x/Yl5JugW/WYhcNARj8WQNb03sG5p2AhAkAEWCqy
-ccZRcKKoiDCacH/I3vUHZgnj71au0P7NvkG/y0uOLtTnAmRQcShs4LCQUbvkE2Iw
-yDWA923nuouiR9KhAkEAhzwqufY69opqSLRB0ZNDM+xhedq57e6Sb+dREzHfhlHe
-0MUAd+iQMjYntb39A/Vfp52p3B6vI/f7Yw1aDN9pXA==
------END RSA PRIVATE KEY-----
-*/
