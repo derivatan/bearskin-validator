@@ -17,7 +17,7 @@ func TestUnauthorizedError(t *testing.T) {
 
 func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 	exp := int64(1893455999)
-	userId := "73b461c4-dbe3-4430-b8fb-a7611394c9e1"
+	userID := "73b461c4-dbe3-4430-b8fb-a7611394c9e1"
 	token := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4OTM0NTU5OTksInVzZXItaWQiOiI3M2I0NjFjNC1kYmUzLTQ0MzAtYjhmYi1hNzYxMTM5NGM5ZTEiLCJwZXJtaXNzaW9ucyI6eyJuIjp7InVzZXJzIjp7Im4iOnsiKiI6eyJwIjp0cnVlfSwiZGVsZXRlIjp7fX19fX19.Uqz2x8guhGj3bzCKFlIasAQntIRFUyAbrREnrtWy-1Tu3kcxvNfA4Gx722Ke-w2sg45udZvlCt8NGDxAXhbt0pYGCLmPfP97woRfns4mlQjdOMS53AWihXHVzwPJDLc3Eh1uxRSBL-J9ffdkkHZx-k7F6ju0LQGSnT-6T7GMYTk"
 	permissions := &Permissions{Next: map[string]*Permissions{
 		"users": {Next: map[string]*Permissions{
@@ -30,7 +30,7 @@ func TestGetClaimsFromVerifiedJwt(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, exp, claims.ExpiresAt)
-	assert.Equal(t, userId, claims.UserID)
+	assert.Equal(t, userID, claims.UserID)
 	assert.Len(t, claims.Permissions.Next, len(permissions.Next))
 	assert.Equal(t, claims.Permissions.Next["users"].Next["*"], permissions.Next["users"].Next["*"])
 	assert.Equal(t, claims.Permissions.Next["users"].Next["delete"], permissions.Next["users"].Next["delete"])
